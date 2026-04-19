@@ -1,6 +1,8 @@
-> 参考：[Git Official Cheat Sheet](https://git-scm.com/cheat-sheet) 
+> 💡 Git 日常开发最常用的命令有哪些？
 
-## 一、配置 
+> 参考：[Git Official Cheat Sheet](https://git-scm.com/cheat-sheet)
+
+## 一、配置
 
 ```bash
 # 全局用户信息（首次使用必配）
@@ -44,8 +46,8 @@ git diff --stat               # 只看摘要（修改了哪些文件、行数）
 # 暂存
 git add <file>                # 暂存指定文件
 git add .                     # 暂存当前目录下所有变更
-git add -p                    # 交互式暂存（逐块选择，强烈推荐 code review 前使用）
 git add -u                    # 只暂存已追踪文件的修改（不包含新文件）
+# 交互式暂存 git add -p 见 [[Git变基与交互式操作]]
 
 # 取消暂存 / 放弃修改
 git restore --staged <file>   # 取消暂存（新版推荐）
@@ -64,7 +66,7 @@ git commit --amend            # 修改最近一次提交（信息或内容）
 git commit --amend --no-edit  # 追加到上次提交但不改信息
 ```
 
-## 四、分支管理
+## 四、分支管理（基础）
 
 ```bash
 # 查看
@@ -85,17 +87,12 @@ git push origin --delete <branch>   # 删除远程分支
 
 # 合并
 git merge <branch>            # 合并指定分支到当前分支
-git merge --no-ff <branch>    # 保留分支历史（推荐团队协作）
+git merge --no-ff <branch>    # 保留分支历史（团队协作推荐，见 [[Git团队协作流程]]）
 git merge --abort             # 合并冲突时放弃本次合并
-
-# 变基（rebase）—— 保持提交历史线性
-git rebase <branch>           # 当前分支基于 branch 变基
-git rebase --continue         # 解决冲突后继续
-git rebase --abort            # 放弃变基
-git rebase -i HEAD~3          # 交互式变基（合并/重写最近 3 次提交）
+# 变基（rebase）见 [[Git变基与交互式操作]]
 ```
 
-## 五、暂存与恢复
+## 五、暂存与恢复（stash）
 
 ```bash
 git stash                     # 暂存当前修改（切分支前救急）
@@ -124,7 +121,7 @@ git pull --rebase             # fetch + rebase（推荐，保持历史整洁）
 
 git push                      # 推送到上游分支
 git push -u origin <branch>   # 首次推送并建立追踪关系
-git push --force-with-lease   # 安全的强制推送（rebase 后必用，比 -f 更安全）
+# 强制推送 --force-with-lease 见 [[Git团队协作流程]]
 ```
 
 ## 七、历史查看
@@ -140,6 +137,8 @@ git log --since="2 weeks ago" # 按时间过滤
 git log <file>                # 某文件的提交历史
 git log --follow <file>       # 包含重命名之前的历史
 git log -p <file>             # 显示每次提交的具体内容
+git log -S "关键字"            # 查找代码中出现/消失过某字符串的提交
+git log --grep="bugfix"       # 按 commit message 搜索
 
 # 查看具体提交
 git show <commit>             # 查看某次提交详情
@@ -148,73 +147,5 @@ git show <commit>:<file>      # 查看某提交时该文件的内容
 
 # 追溯
 git blame <file>              # 每一行是谁、何时提交的
-git reflog                    # 所有 HEAD 变更记录（救命神器）
-```
-
-## 八、撤销与回退
-
-```bash
-# 撤销提交（保留修改）
-git reset HEAD^               # 撤销最近一次提交，修改回到工作区
-git reset --soft HEAD^        # 撤销提交，修改回到暂存区
-git reset --mixed HEAD^       # 撤销提交和暂存（默认）
-git reset --hard HEAD^        # 撤销提交并丢弃修改（危险！）
-
-# 回退到指定提交
-git reset --hard <commit>     # 彻底回退（会丢失之后的提交）
-git revert <commit>           # 新建一个反向提交来撤销（推荐用于已推送的提交）
-
-# 清理
-git clean -n                  # 预览将要删除的未追踪文件
-git clean -fd                 # 强制删除未追踪的文件和目录
-```
-
-## 九、救急与进阶
-
-```bash
-# Cherry-pick：摘取其他分支的某次提交
-git cherry-pick <commit>
-git cherry-pick <commit1>..<commit2>   # 范围摘取
-
-# 找回丢失的提交（reset --hard 后不要慌）
-git reflog                    # 找到操作记录
-git reset --hard <commit>     # 回到之前的状态
-
-# 查找修改了特定文本的提交
-git log -S "关键字"            # 查找代码中出现/消失过某字符串的提交
-git log --grep="bugfix"       # 按 commit message 搜索
-```
-
-## 十、团队协作标准流程
-
-```bash
-# 1. 每天开工前同步代码
-git switch main
-git pull --rebase
-
-# 2. 创建功能分支
-git switch -c feature/xxx
-
-# 3. 开发并提交（小步提交）
-git add -p
-git commit -m "feat: xxx"
-
-# 4. 推送前同步主分支最新代码（保持线性历史）
-git fetch origin
-git rebase origin/main
-# 如有冲突：解决后 git add . && git rebase --continue
-
-# 5. 推送
-git push -u origin feature/xxx
-# 若 rebase 后需要再推送：
-git push --force-with-lease
-
-# 6. 合并到主分支（通过 MR/PR 或本地合并）
-git switch main
-git merge --no-ff feature/xxx
-git push
-
-# 7. 清理已合并的分支
-git branch -d feature/xxx
-git push origin --delete feature/xxx
+# reflog（救命神器）见 [[Git撤销与回退]]
 ```
